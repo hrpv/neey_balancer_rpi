@@ -1,0 +1,14 @@
+[Unit]
+Description=NEEY Balancer MQTT Service
+After=network.target bluetooth.service mosquitto.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi
+ExecStart=/usr/bin/python3 /home/pi/neey_mqtt.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
