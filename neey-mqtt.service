@@ -4,9 +4,16 @@ After=network.target bluetooth.service mosquitto.service
 
 [Service]
 Type=simple
-User=pi
-WorkingDirectory=/home/pi
-ExecStart=/usr/bin/python3 /home/pi/neey_mqtt.py
+#User=pi
+User=root
+Group=root
+WorkingDirectory=/var/log
+ExecStart=/usr/bin/python3 /usr/bin/neey_mqtt_kimi.py
+#cleanup blutooth when service is stopped
+ExecStopPost=/usr/bin/hciconfig hci0 down
+ExecStopPost=/bin/sleep 1
+ExecStopPost=/usr/bin/hciconfig hci0 up
+
 Restart=always
 RestartSec=10
 

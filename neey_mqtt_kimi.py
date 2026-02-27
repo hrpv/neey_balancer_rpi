@@ -23,7 +23,8 @@ UPDATE_INTERVAL = 30  # seconds
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
-    level=logging.INFO,
+#    level=logging.INFO,
+    level=logging.WARNING,  # ← Only WARN and ERROR
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 log = logging.getLogger(__name__)
@@ -58,7 +59,7 @@ def on_mqtt_connect(client, userdata, flags, rc):
 
 def init_mqtt():
     global mqtt_client
-    mqtt_client = mqtt.Client()
+    mqtt_client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION1)
     mqtt_client.on_connect = on_mqtt_connect
     
     try:
@@ -245,6 +246,8 @@ class HeltecBalancerBle:
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
 async def main():
+    log.warning("Starting up...")
+    
     if not init_mqtt():
         log.error("Failed to initialize MQTT")
         sys.exit(1)
@@ -285,14 +288,14 @@ async def main():
                     
         except Exception as e:
             log.error("Connection error: %s", e)
-            log.info("Reconnecting in 10 seconds...")
+            log.warning("Reconnecting in 10 seconds...")
             await asyncio.sleep(10)
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        log.info("Shutting down...")
+        log.warning("Shutting down...")
         if mqtt_client:
             mqtt_client.loop_stop()
             mqtt_client.disconnect()
