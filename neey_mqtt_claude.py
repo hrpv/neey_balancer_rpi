@@ -7,6 +7,7 @@ Connects via BLE every 30 seconds, fetches cell data, disconnects, publishes to 
 import asyncio
 import struct
 import logging
+import os
 import sys
 import json
 from datetime import datetime
@@ -21,8 +22,10 @@ MQTT_TOPIC = "NEEY"
 UPDATE_INTERVAL = 30  # seconds between BLE connections
 
 # ── Logging ───────────────────────────────────────────────────────────────────
+# Use WARNING when running as a systemd service, INFO otherwise
+_under_systemd = "INVOCATION_ID" in os.environ or "JOURNAL_STREAM" in os.environ
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.WARNING if _under_systemd else logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 log = logging.getLogger(__name__)
@@ -372,4 +375,3 @@ if __name__ == "__main__":
         if mqtt_client:
             mqtt_client.loop_stop()
             mqtt_client.disconnect()
-            

@@ -7,6 +7,7 @@ Publishes to MQTT every 30 seconds only
 import asyncio
 import struct
 import logging
+import os
 import sys
 import json
 import time
@@ -22,9 +23,9 @@ MQTT_TOPIC = "NEEY"
 UPDATE_INTERVAL = 30  # seconds
 
 # ── Logging ───────────────────────────────────────────────────────────────────
+_under_systemd = "INVOCATION_ID" in os.environ or "JOURNAL_STREAM" in os.environ
 logging.basicConfig(
-#    level=logging.INFO,
-    level=logging.WARNING,  # ← Only WARN and ERROR
+    level=logging.WARNING if _under_systemd else logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 log = logging.getLogger(__name__)
@@ -246,7 +247,7 @@ class HeltecBalancerBle:
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
 async def main():
-    log.warning("Starting up...")
+    log.info("Starting up...")
     
     if not init_mqtt():
         log.error("Failed to initialize MQTT")
@@ -296,7 +297,7 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        log.warning("Shutting down...")
+        log.info("Shutting down...")
         if mqtt_client:
             mqtt_client.loop_stop()
             mqtt_client.disconnect()
