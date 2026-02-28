@@ -353,10 +353,10 @@ async def main():
             result = await fetch_once(balancer)
 
             if result:
-                print(f"\n{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - "
-                      f"Total: {result['total_voltage']:.2f}V "
-                      f"Delta: {result['delta_cell_voltage']:.3f}V "
-                      f"Cells: {result['cell_count']}")
+                log.info("Total: %s V  Delta: %s V  Cells: %s",
+                            f"{result['total_voltage']:.2f}",
+                            f"{result['delta_cell_voltage']:.3f}",
+                            result['cell_count'])
                 publish_data(result)
             else:
                 log.warning("No cell data received in this cycle")
