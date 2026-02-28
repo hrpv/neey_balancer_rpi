@@ -51,15 +51,15 @@ MIN_RESPONSE_SIZE = 20
 MAX_RESPONSE_SIZE = 300
 
 # ── MQTT ──────────────────────────────────────────────────────────────────────
-def on_mqtt_connect(client, userdata, flags, rc):
-    if rc == 0:
+def on_mqtt_connect(client, userdata, flags, reason_code, properties):
+    if reason_code == 0:
         log.info("MQTT connected to %s:%d", MQTT_BROKER, MQTT_PORT)
     else:
-        log.error("MQTT connection failed with code %d", rc)
+        log.error("MQTT connection failed with code %s", reason_code)
 
 def init_mqtt():
     global mqtt_client
-    mqtt_client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION1)
+    mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     mqtt_client.on_connect = on_mqtt_connect
     
     try:
@@ -260,22 +260,23 @@ async def main():
             
             async with BleakClient(BALANCER_MAC) as client:
                 log.info("Connected to balancer")
-                
-                # Request device info first
+
+                # FIX: Start notifications BEFORE sending any command so that
+                # the device info response is actually received and decoded.
+                def notification_handler(_, data):
+                    result = balancer.assemble(data)
+                    if result and result.get("type") == "cell_info":
+                        publish_data(result)
+
+                await client.start_notify(HELTEC_CHARACTERISTIC_UUID, notification_handler)
+
+                # Request device info and wait for the notification to arrive
                 await client.write_gatt_char(
                     HELTEC_CHARACTERISTIC_UUID,
                     build_command(FUNCTION_READ, COMMAND_DEVICE_INFO),
                     response=False,
                 )
-                await asyncio.sleep(2)
-                
-                # Notification handler
-                def notification_handler(_, data):
-                    result = balancer.assemble(data)
-                    if result and result.get("type") == "cell_info":
-                        publish_data(result)
-                
-                await client.start_notify(HELTEC_CHARACTERISTIC_UUID, notification_handler)
+                await asyncio.sleep(2)  # Give the device time to respond
                 
                 # Main loop - request cell info every 30 seconds
                 while True:
@@ -299,4 +300,3 @@ if __name__ == "__main__":
         if mqtt_client:
             mqtt_client.loop_stop()
             mqtt_client.disconnect()
-			
