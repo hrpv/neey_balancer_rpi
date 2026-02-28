@@ -245,14 +245,21 @@ async def ble_request(command: int, on_notification) -> bool:
     returns True (frame complete) or the device disconnects, then close.
     The EOFError from dbus_fast when the device drops the link is swallowed.
     """
+
     done = asyncio.Event()
+    response_received = False
 
     def _notif(_, data):
+        nonlocal response_received
         if on_notification(data):
+            response_received = True
             done.set()
 
     def _disconnected(_):
-        log.warning("BLE device disconnected unexpectedly")
+        if not response_received:
+            log.warning("BLE device disconnected unexpectedly")
+        else:
+            log.debug("BLE device closed link after response (expected)")
         done.set()
 
     log.info("BLE connecting for command 0x%02X ...", command)
