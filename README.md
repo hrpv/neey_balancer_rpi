@@ -91,36 +91,85 @@ Check status:
 sudo systemctl status neey-mqtt.service
 ```
 ### 📡 MQTT Topics
-Data is published to subtopics under your configured base topic:
+Data is published to subtopics under your configured base topic (default: NEEY):
+
+Main JSON Payload
 ```table
-Topic	Description	Unit
-neey/balancer/cell_1_voltage	Cell 1 voltage	mV
-neey/balancer/cell_2_voltage	Cell 2 voltage	mV
-...	...	...
-neey/balancer/total_voltage	Pack voltage	mV
-neey/balancer/current	Current	mA
-neey/balancer/soc	State of charge	%
-neey/balancer/temperature_1	Temperature sensor 1	°C
+| Topic       | Description           | Format      |
+| ----------- | --------------------- | ----------- |
+| `NEEY/data` | Complete device state | JSON object |
 ```
+Individual Sensor Topics (Retained, QoS 1)
+```table
+| Topic                 | Description                         | Unit   | Example  |
+| --------------------- | ----------------------------------- | ------ | -------- |
+| `NEEY/total_voltage`  | Pack total voltage                  | V      | `12.345` |
+| `NEEY/delta_voltage`  | Cell voltage difference (max - min) | V      | `0.025`  |
+| `NEEY/temperature`    | Temperature sensor 1                | °C     | `25.5`   |
+| `NEEY/balancing`      | Balancing active status             | ON/OFF | `ON`     |
+| `NEEY/cell_1/voltage` | Cell 1 voltage                      | V      | `3.456`  |
+| `NEEY/cell_2/voltage` | Cell 2 voltage                      | V      | `3.457`  |
+| ...                   | ...                                 | ...    | ...      |
+```
+JSON Payload Structure (NEEY/data)
+```json
+{
+  "timestamp": "2024-01-15T10:30:00",
+  "device": {
+    "model": "NEEY-4A",
+    "hw_version": "1.0", 
+    "sw_version": "2.1"
+  },
+  "battery": {
+    "total_voltage": 12.345,
+    "average_cell_voltage": 3.456,
+    "min_cell_voltage": 3.4,
+    "max_cell_voltage": 3.5,
+    "delta_voltage": 0.1,
+    "cell_count": 4,
+    "temperature_1": 25.5,
+    "temperature_2": 26.0,
+    "balancing": true,
+    "status": 5
+  },
+  "cells": [
+    {"cell": 1, "voltage": 3.456, "resistance": 0.5},
+    {"cell": 2, "voltage": 3.457, "resistance": 0.51}
+  ]
+}
+```
+
 ### 🏠 Home Assistant Integration
 Add to configuration.yaml:
 ```yaml
 mqtt:
   sensor:
-    - name: "Battery Cell 1"
-      state_topic: "neey/balancer/cell_1_voltage"
-      unit_of_measurement: "mV"
-      value_template: "{{ value | int / 1000 }}"
-    
-    - name: "Battery Total Voltage"
-      state_topic: "neey/balancer/total_voltage"
+    - name: "NEEY Total Voltage"
+      state_topic: "NEEY/total_voltage"
       unit_of_measurement: "V"
-      value_template: "{{ value | int / 1000 }}"
-    
-    - name: "Battery SOC"
-      state_topic: "neey/balancer/soc"
-      unit_of_measurement: "%"
+      
+    - name: "NEEY Delta Voltage"
+      state_topic: "NEEY/delta_voltage"
+      unit_of_measurement: "V"
+      
+    - name: "NEEY Temperature"
+      state_topic: "NEEY/temperature"
+      unit_of_measurement: "°C"
+      
+    - name: "NEEY Balancing Status"
+      state_topic: "NEEY/balancing"
+      
+    - name: "NEEY Cell 1 Voltage"
+      state_topic: "NEEY/cell_1/voltage"
+      unit_of_measurement: "V"
 ```
+Or use the JSON topic with value templates:
+```yaml
+    - name: "NEEY Cell 1 Voltage JSON"
+      state_topic: "NEEY/data"
+      unit_of_measurement: "V"
+      value_template: "{{ value_json.cells[0].voltage }}"
+```      
 ### 🛠️ Troubleshooting
 Permission Denied for BLE
 ```bash
