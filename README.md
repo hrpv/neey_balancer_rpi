@@ -94,13 +94,13 @@ sudo systemctl status neey-mqtt.service
 Data is published to subtopics under your configured base topic (default: NEEY):
 
 Main JSON Payload
-```table
+
 | Topic       | Description           | Format      |
 | ----------- | --------------------- | ----------- |
 | `NEEY/data` | Complete device state | JSON object |
-```
+
 Individual Sensor Topics (Retained, QoS 1)
-```table
+
 | Topic                 | Description                         | Unit   | Example  |
 | --------------------- | ----------------------------------- | ------ | -------- |
 | `NEEY/total_voltage`  | Pack total voltage                  | V      | `12.345` |
@@ -110,7 +110,7 @@ Individual Sensor Topics (Retained, QoS 1)
 | `NEEY/cell_1/voltage` | Cell 1 voltage                      | V      | `3.456`  |
 | `NEEY/cell_2/voltage` | Cell 2 voltage                      | V      | `3.457`  |
 | ...                   | ...                                 | ...    | ...      |
-```
+
 JSON Payload Structure (NEEY/data)
 ```json
 {
