@@ -169,7 +169,38 @@ Or use the JSON topic with value templates:
       state_topic: "NEEY/data"
       unit_of_measurement: "V"
       value_template: "{{ value_json.cells[0].voltage }}"
-```      
+```
+
+### Webserver for testing
+Run the server
+```bash
+python3 neey_webserver.py
+```
+Access the Dashboard
+Open your browser to: http://127.0.0.1:2222
+
+How It Works
+```plain
+
+┌─────────────┐     MQTT      ┌──────────────┐     HTTP     ┌─────────────┐
+│   NEEY BMS  │ ────────────> │  Python      │ ───────────> │   Browser   │
+│  (GW-24S4EB)│   NEEY/#      │  Bridge      │   /data      │  jQuery UI  │
+│             │               │  Port 2222   │   (5s poll)  │             │
+└─────────────┘               └──────────────┘              └─────────────┘
+        ↑                                                        ↑
+   mosquitto_sub                                              127.0.0.1:2222
+   localhost:1883
+```
+
+Key Features
+- MQTT Subscriber: Connects to localhost:1883, subscribes to NEEY/#
+- HTTP Server: Serves dashboard at port 2222 and provides /data endpoint
+- Auto-Refresh: Frontend polls every 5 seconds (as requested)
+- Connection Indicator: Green dot when MQTT data is flowing
+- Thread-Safe: Uses locks to prevent data corruption between MQTT and HTTP threads
+- Auto-Reconnect: MQTT client reconnects if broker drops
+- No External Files: Single Python file contains everything (embedded HTML)
+
 ### 🛠️ Troubleshooting
 Permission Denied for BLE
 ```bash
