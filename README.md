@@ -172,12 +172,15 @@ Or use the JSON topic with value templates:
 ```
 
 ### Webserver for testing
-Run the server
+Run the server:
 ```bash
 python3 neey_webserver.py
 ```
 Access the Dashboard
 Open your browser to: http://127.0.0.1:2222
+
+#### Web Dashboard Preview
+![Dashboard Screenshot](docs/screenshot.png)
 
 How It Works
 ```plain
